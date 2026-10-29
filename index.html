@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OSRS QUANT DESK PRO — Live 5m Whale Radar, Set/Godsword Arbitrage & Orderbook Snipes</title>
+<style>
+  :root {
+    --bg: #09090b;
+    --panel: #111114;
+    --border: #27272a;
+    --border-hi: #3f3f46;
+    --text: #f4f4f5;
+    --muted: #a1a1aa;
+    --green: #22c55e;
+    --amber: #f59e0b;
+    --cyan: #38bdf8;
+    --red: #ef4444;
+    --mono: 'JetBrains Mono', 'Cascadia Mono', 'Consolas', monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 16px 20px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.4;
+  }
+  .hdr {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 12px 16px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .hdr-title { font-size: 14px; font-weight: 800; color: var(--amber); letter-spacing: 0.4px; }
+  .hdr-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .bar {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .pro-banner {
+    border: 1px solid #854d0e;
+    background: linear-gradient(90deg, #1c1917 0%, #291d0a 100%);
+    padding: 10px 16px;
+    margin-bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .pro-banner.unlocked {
+    border-color: #166534;
+    background: #052e16;
+  }
+  input, select {
+    background: #09090b;
+    border: 1px solid var(--border-hi);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 11.5px;
+    padding: 6px 8px;
+  }
+  button {
+    background: var(--amber);
+    color: #09090b;
+    border: 1px solid var(--amber);
+    font-family: var(--mono);
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 6px 12px;
+    cursor: pointer;
+    text-transform: uppercase;
+  }
+  button:hover { opacity: 0.92; }
+  button.sec {
+    background: #18181b;
+    color: #fafafa;
+    border-color: var(--border-hi);
+  }
+  button.green {
+    background: var(--green);
+    color: #052e16;
+    border-color: var(--green);
+  }
+  .tick-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: auto;
+  }
+  .tick-dot {
+    width: 15px;
+    height: 15px;
+    border: 1px solid var(--border-hi);
+    background: #18181b;
+  }
+  .tick-dot.on {
+    background: var(--green);
+    border-color: #4ade80;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  @media (max-width: 1100px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+  .panel {
+    border: 1px solid var(--border);
+    background: var(--panel);
+    padding: 12px;
+  }
+  .panel-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 6px 7px;
+    text-align: left;
+  }
+  th { background: #18181b; color: var(--muted); }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .blur-item {
+    filter: blur(5px);
+    user-select: none;
+    display: inline-block;
+    margin-right: 6px;
+  }
+  .lock-pill {
+    background: #422006;
+    border: 1px solid #f59e0b;
+    color: #fbbf24;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  /* Checkout Modal */
+  .modal-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.82);
+    z-index: 999;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .modal-bg.open { display: flex; }
+  .modal {
+    background: #111114;
+    border: 1px solid var(--amber);
+    max-width: 520px;
+    width: 100%;
+    padding: 20px;
+  }
+  .modal h2 { margin: 0 0 8px 0; color: var(--amber); font-size: 15px; }
+  .tier-card {
+    border: 1px solid var(--border-hi);
+    background: #18181b;
+    padding: 12px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="hdr-title">OSRS QUANT DESK PRO // LIVE 5M WHALE RADAR &amp; MULTI-LEG ARBITRAGE ENGINE</div>
+    <div class="hdr-sub">Real-Time RuneLite OSRS Feed (<span id="item_cnt">4,674</span> items | Nature Rune: <span id="nat_gp">--</span> gp | Old School Bond: <strong id="bond_gp" style="color:var(--green)">--</strong> gp)</div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <span>Mode:</span>
+    <select id="f2p_mode" onchange="renderAll()">
+      <option value="1">F2P ONLY (Free-to-Play)</option>
+      <option value="0" selected>ALL ITEMS (Members + F2P)</option>
+    </select>
+    <span>Max Price:</span>
+    <select id="max_gp" onchange="renderAll()">
+      <option value="1000000">Under 1M GP</option>
+      <option value="10000000">Under 10M GP</option>
+      <option value="50000000" selected>Under 50M GP</option>
+      <option value="2147483647">All Items (Up to 2.14B)</option>
+    </select>
+    <button onclick="fetchLiveOSRS()">REFRESH LIVE GE</button>
+  </div>
+</div>
+
+<!-- PRO / MONETIZATION BANNER -->
+<div class="pro-banner" id="pro_banner">
+  <div id="pro_txt">
+    <strong style="color:var(--amber)">[FREE EDITION]</strong> Top #1–#2 highest-profit Whale Sweeps, Godsword/Set Packs &amp; +10,000% Snipes are locked.
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <button class="green" id="btn_upgrade" onclick="openModal()">UNLOCK PRO ($9.99/MO OR $25 FOUNDER PASS)</button>
+    <input type="text" id="vip_input" placeholder="Enter VIP Key" style="width:120px">
+    <button class="sec" onclick="redeemKey()">ACTIVATE KEY</button>
+  </div>
+</div>
+
+<div class="bar">
+  <strong>+10,000% (101x) COMPOUNDING CALCULATOR:</strong>
+  <span>Start GP: <input type="number" id="c_start" value="100000" style="width:95px" oninput="calc10k()"></span>
+  <span>Target ROI/Flip (%): <input type="number" id="c_roi" value="12" style="width:60px" oninput="calc10k()"></span>
+  <span id="c_res" style="color:var(--green);font-weight:700">--</span>
+
+  <div class="tick-box">
+    <strong>600ms TICK:</strong>
+    <div class="tick-dot" id="td0"></div>
+    <div class="tick-dot" id="td1"></div>
+    <div class="tick-dot" id="td2"></div>
+    <div class="tick-dot" id="td3"></div>
+    <button class="sec" id="btn_tick" onclick="toggleTick()">600ms METRONOME</button>
+    <button onclick="speakBriefing()">🔊 VOICE CALLOUT</button>
+  </div>
+</div>
+
+<!-- 1. WALL STREET 5-MINUTE WHALE RADAR -->
+<div class="panel" style="margin-bottom:12px">
+  <div class="panel-title">
+    <span style="color:var(--red)">★ 1. LIVE 5-MINUTE WHALE BUYOUT &amp; MERCH CLAN SWEEP RADAR (/5m vs /1h ORDERFLOW)</span>
+    <span style="color:var(--amber)">DETECTS CLAN ACCUMULATION BEFORE PRICE SPIKES</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>ITEM BEING SWEPT RIGHT NOW</th>
+        <th class="num">5M VOLUME SURGE</th>
+        <th class="num">AGGRESSIVE BUY PRESSURE</th>
+        <th class="num">CURRENT PRICE</th>
+        <th class="num">5M GP TURNOVER</th>
+        <th class="num">5M QTY SWEPT</th>
+      </tr>
+    </thead>
+    <tbody id="whale_rows"><tr><td colspan="6">Connecting to RuneLite 5-minute orderbook stream...</td></tr></tbody>
+  </table>
+</div>
+
+<!-- 2. MULTI-LEG COMBINATION ARBITRAGE (SETS, GODSWORDS, DECANTING) -->
+<div class="grid">
+  <div class="panel">
+    <div class="panel-title">
+      <span style="color:var(--cyan)">★ 2. GODSWORD &amp; ARMOR SET PACK / UNPACK ARBITRAGE</span>
+      <span style="color:var(--green)">1-TICK GE CLERK / INVENTORY</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>SET / GODSWORD</th>
+          <th>ACTION</th>
+          <th class="num">BUY COST</th>
+          <th class="num">SELL REV</th>
+          <th class="num">NET PROFIT</th>
+          <th class="num">ROI %</th>
+        </tr>
+      </thead>
+      <tbody id="set_rows"><tr><td colspan="6">Scanning 17 Armor Sets &amp; 5 Godswords...</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">
+      <span style="color:var(--cyan)">★ 3. BOB BARTER 1-TICK NOTED POTION DECANTING</span>
+      <span style="color:var(--amber)">FREE AT GE SW CORNER</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>POTION RECIPE</th>
+          <th class="num">BUY DOSE</th>
+          <th class="num">4-DOSE COST</th>
+          <th class="num">SELL (4)-DOSE</th>
+          <th class="num">NET PROFIT / (4)</th>
+          <th class="num">ROI %</th>
+        </tr>
+      </thead>
+      <tbody id="decant_rows"><tr><td colspan="6">Scanning (1)/(2)/(3) -> (4) dose spreads...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- 3. +10,000% VACUUM SNIPES -->
+<div class="panel" style="margin-bottom:12px">
+  <div class="panel-title">
+    <span style="color:var(--green)">★ 4. LIVE +200% TO +10,000%+ ASYMMETRIC ORDERBOOK VACUUM SNIPES (ACTIVE VOLUME &ge; 5/HR)</span>
+    <span style="color:var(--amber)">RESTING LOWBALL BUY &rarr; INSTANT-BUY HIGH</span>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>ITEM NAME (QUEST / CLUE / 1-DOSE VACUUM)</th>
+        <th class="num">RESTING BUY (LOW)</th>
+        <th class="num">RESTING SELL (HIGH)</th>
+        <th class="num">NET PROFIT / ITEM</th>
+        <th class="num">SINGLE-TRADE ROI %</th>
+        <th class="num">1H VOLUME</th>
+        <th class="num">4H LIMIT</th>
+      </tr>
+    </thead>
+    <tbody id="snipe_rows"><tr><td colspan="7">Scanning orderbook vacuums...</td></tr></tbody>
+  </table>
+</div>
+
+<!-- 4. HIGH-VOLUME FLIPS & HIGH ALCH -->
+<div class="grid">
+  <div class="panel">
+    <div class="panel-title">
+      <span>5. TOP HIGH-VOLUME GE FLIPS (NET OF 1% GE TAX)</span>
+      <span style="color:var(--green)">SORTED BY 4H LIMIT PROFIT</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>ITEM NAME</th>
+          <th class="num">BUY (LOW)</th>
+          <th class="num">SELL (HIGH)</th>
+          <th class="num">NET MARGIN</th>
+          <th class="num">ROI %</th>
+          <th class="num">1H VOL</th>
+          <th class="num">EST 4H PROFIT</th>
+        </tr>
+      </thead>
+      <tbody id="flip_rows"></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">
+      <span>6. GUARANTEED PROFIT HIGH ALCHEMY (+65 MAGIC XP)</span>
+      <span style="color:var(--amber)">INSTANT-BUY SAFE</span>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>ITEM NAME</th>
+          <th class="num">GE BUY</th>
+          <th class="num">HIGH ALCH</th>
+          <th class="num">PROFIT/EA</th>
+          <th class="num">4H LIMIT</th>
+          <th class="num">PROFIT / 4H</th>
+        </tr>
+      </thead>
+      <tbody id="alch_rows"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- UPGRADE MODAL -->
+<div class="modal-bg" id="modal_bg" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <h2>UNLOCK OSRS QUANT DESK PRO</h2>
+    <p style="color:var(--muted);margin:0 0 14px 0">
+      Unblur the #1 and #2 highest-profit rows across the 5-Minute Whale Radar, Godsword/Armor Set Pack Scanner, Bob Barter Decants, and +10,000% Vacuum Snipes.
+    </p>
+    <div class="tier-card">
+      <div>
+        <strong style="color:#fff;font-size:13px">MONTHLY PRO PASS</strong>
+        <div style="color:var(--muted);font-size:11px">Full real-time access + Voice Shotcaller</div>
+      </div>
+      <button onclick="alert('Connect your Stripe / Gumroad / Ko-fi link here! Or use VIP key SAM256 for Founder/Brother access.')">$9.99 / MONTH</button>
+    </div>
+    <div class="tier-card" style="border-color:var(--green)">
+      <div>
+        <strong style="color:var(--green);font-size:13px">FOUNDER LIFETIME PASS (FIRST 25 USERS)</strong>
+        <div style="color:var(--muted);font-size:11px">One-time payment — permanent Pro key</div>
+      </div>
+      <button class="green" onclick="alert('Connect your $25 Stripe Payment Link here!')">$25 ONE-TIME</button>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px">
+      <span style="color:var(--muted);font-size:11px">Have a Founder / VIP Key? Enter it in the top bar.</span>
+      <button class="sec" onclick="closeModal()">CLOSE</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const VALID_KEYS = new Set(["SAM256", "BROTHER", "FOUNDER2026", "VIP"]);
+let isPro = false;
+let rawMapping = {};
+let rawLatest = {};
+let raw1h = {};
+let raw5m = {};
+let computed = { whales: [], sets: [], decants: [], snipes: [], flips: [], alchs: [], nat: 149, bond: 10250000 };
+
+function fmt(n) { return Number(n || 0).toLocaleString(); }
+function geTax(p) { return p < 100 ? 0 : Math.min(5000000, Math.floor(p * 0.01)); }
+
+function checkProInit() {
+  const params = new URLSearchParams(location.search);
+  const urlKey = (params.get('vip') || '').toUpperCase();
+  if (VALID_KEYS.has(urlKey)) {
+    localStorage.setItem('osrs_quant_vip', urlKey);
+  }
+  const saved = (localStorage.getItem('osrs_quant_vip') || '').toUpperCase();
+  if (VALID_KEYS.has(saved)) {
+    isPro = true;
+    const bn = document.getElementById('pro_banner');
+    bn.classList.add('unlocked');
+    document.getElementById('pro_txt').innerHTML =
+      `<strong style="color:#4ade80">[★ PRO VIP UNLOCKED — KEY: ${saved}]</strong> All #1–#2 Whale Sweeps, Godsword/Set Arbs, and +10,000% Snipes are unblurred.`;
+    document.getElementById('btn_upgrade').style.display = 'none';
+  }
+}
+
+function redeemKey() {
+  const k = (document.getElementById('vip_input').value || '').trim().toUpperCase();
+  if (VALID_KEYS.has(k)) {
+    localStorage.setItem('osrs_quant_vip', k);
+    checkProInit();
+    renderAll();
+  } else {
+    alert('Invalid VIP Key. Purchase a Pro Pass or ask Sam for a Founder Key.');
+  }
+}
+
+function openModal() { document.getElementById('modal_bg').classList.add('open'); }
+function closeModal() { document.getElementById('modal_bg').classList.remove('open'); }
+
+function lockName(name, idx) {
+  if (isPro || idx >= 2) return `<strong>${name}</strong>`;
+  return `<span class="blur-item">Secret Item #${idx+1}</span><span class="lock-pill" onclick="openModal()">🔒 PRO #${idx+1}</span>`;
+}
+
+function calc10k() {
+  const start = parseFloat(document.getElementById('c_start').value) || 100000;
+  const roi   = Math.max(0.5, parseFloat(document.getElementById('c_roi').value) || 12);
+  const target = start * 101;
+  const flipsNeeded = Math.ceil(Math.log(101) / Math.log(1 + roi / 100.0));
+  const cycles8Slot = Math.ceil(flipsNeeded / 8);
+  document.getElementById('c_res').textContent =
+    `${fmt(start)} -> ${fmt(target)} (+10,000%) = ${flipsNeeded} flips (${cycles8Slot} rounds across 8 GE slots)`;
+}
+
+async function fetchLiveOSRS() {
+  try {
+    if (Object.keys(rawMapping).length === 0) {
+      const rm = await fetch('https://prices.runescape.wiki/api/v1/osrs/mapping');
+      const arr = await rm.json();
+      for (const it of arr) rawMapping[String(it.id)] = it;
+    }
+    const [rl, r1, r5] = await Promise.all([
+      fetch('https://prices.runescape.wiki/api/v1/osrs/latest').then(r => r.json()),
+      fetch('https://prices.runescape.wiki/api/v1/osrs/1h').then(r => r.json()),
+      fetch('https://prices.runescape.wiki/api/v1/osrs/5m').then(r => r.json())
+    ]);
+    rawLatest = rl.data || {};
+    raw1h = r1.data || {};
+    raw5m = r5.data || {};
+    renderAll();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function renderAll() {
+  const f2pOnly = document.getElementById('f2p_mode').value === '1';
+  const maxGp = parseInt(document.getElementById('max_gp').value, 10) || 50000000;
+
+  const natInfo = rawLatest["561"] || {};
+  const natPrice = natInfo.high || natInfo.low || 149;
+  const bondInfo = rawLatest["13190"] || {};
+  const bondPrice = bondInfo.high || bondInfo.low || 10250000;
+
+  document.getElementById('item_cnt').textContent = fmt(Object.keys(rawMapping).length);
+  document.getElementById('nat_gp').textContent = fmt(natPrice);
+  document.getElementById('bond_gp').textContent = fmt(bondPrice);
+
+  const flips = [], alchs = [], snipes = [], whales = [];
+  const nameToId = {};
+
+  for (const [id, meta] of Object.entries(rawMapping)) {
+    nameToId[meta.name] = id;
+    const isMem = Boolean(meta.members);
+    if (f2pOnly && isMem) continue;
+
+    const p = rawLatest[id];
+    if (!p || !p.high || !p.low || p.low <= 0 || p.high <= p.low) continue;
+    const high = p.high, low = p.low;
+    const v1 = raw1h[id] || {};
+    const vol1h = (v1.highPriceVolume || 0) + (v1.lowPriceVolume || 0);
+    const limit = meta.limit || 0;
+    const alchVal = meta.highalch || 0;
+    const tag = isMem ? '[P2P]' : '[F2P]';
+    const fullName = `${tag} ${meta.name}`;
+
+    const tax = geTax(high);
+    const net = high - low - tax;
+    const roi = (net / low) * 100.0;
+
+    // 1. Snipes
+    const minRoiSnipe = f2pOnly ? 35.0 : 150.0;
+    const minNetSnipe = f2pOnly ? 200 : 2000;
+    if (roi >= minRoiSnipe && net >= minNetSnipe && vol1h >= 5 && low >= 2) {
+      snipes.push({ name: fullName, buy: low, sell: high, margin: net, roi: roi.toFixed(1), vol: vol1h, limit });
+    }
+
+    // 2. Flips
+    const minFlip = f2pOnly ? 40 : 500;
+    if (net >= minFlip && low <= maxGp && vol1h >= 15 && limit > 0 && roi >= 0.4 && roi <= 45.0) {
+      const effQty = Math.min(limit, Math.max(1, vol1h));
+      flips.push({ name: fullName, buy: low, sell: high, margin: net, roi: roi.toFixed(2), vol: vol1h, pot: net * effQty });
+    }
+
+    // 3. High Alch
+    if (alchVal > 0 && limit >= 40 && vol1h >= 15) {
+      const prof = alchVal - (high + natPrice);
+      if (prof > 20) {
+        alchs.push({ name: fullName, buy: high, alch: alchVal, prof, limit, prof4h: prof * limit });
+      }
+    }
+
+    // 4. 5-Minute Whale Sweeps
+    const d5 = raw5m[id];
+    if (d5 && vol1h > 0) {
+      const b5 = d5.highPriceVolume || 0;
+      const s5 = d5.lowPriceVolume || 0;
+      const tot5 = b5 + s5;
+      const hi5 = d5.avgHighPrice || high;
+      if (tot5 >= 20 && hi5 >= 2000) {
+        const exp5 = Math.max(1.0, vol1h / 12.0);
+        const surge = tot5 / exp5;
+        const buyPct = (b5 / tot5) * 100.0;
+        const turn = tot5 * hi5;
+        if (surge >= 2.2 && buyPct >= 68.0 && turn >= 1500000) {
+          whales.push({ name: fullName, surge: surge.toFixed(1), buyPct: buyPct.toFixed(1), price: hi5, turnM: (turn / 1e6).toFixed(2), qty: tot5, score: surge * buyPct });
+        }
+      }
+    }
+  }
+
+  // 5. Bob Barter Decants
+  const decants = [];
+  for (const [rname, id4] of Object.entries(nameToId)) {
+    if (!rname.endsWith('(4)')) continue;
+    const base = rname.slice(0, -3);
+    const p4 = rawLatest[id4];
+    const v4 = raw1h[id4] || {};
+    const vol4 = (v4.highPriceVolume || 0) + (v4.lowPriceVolume || 0);
+    if (!p4 || !p4.high || p4.high < 600 || vol4 < 10) continue;
+    const sell4 = p4.high;
+    const net4 = sell4 - geTax(sell4);
+    for (const dose of [1, 2, 3]) {
+      const did = nameToId[`${base}(${dose})`];
+      if (did && rawLatest[did]) {
+        const vd = raw1h[did] || {};
+        const vold = (vd.highPriceVolume || 0) + (vd.lowPriceVolume || 0);
+        const buyd = rawLatest[did].high || rawLatest[did].low;
+        if (buyd && buyd >= 50 && vold >= 5) {
+          const cost4 = (buyd / dose) * 4.0;
+          const prof4 = Math.round(net4 - cost4);
+          const roid = (prof4 / cost4) * 100.0;
+          if (prof4 >= 250 && roid <= 300.0) {
+            decants.push({ recipe: `${base}(${dose}) -> (4)`, buyd, cost4: Math.round(cost4), sell4, prof4, roi: roid.toFixed(1) });
+          }
+        }
+      }
+    }
+  }
+
+  // 6. Godsword & Armor Set Pack/Unpack
+  const SETS = [
+    ["Inquisitor's armour set", ["Inquisitor's great helm", "Inquisitor's hauberk", "Inquisitor's plateskirt"]],
+    ["Masori armour set (f)", ["Masori mask (f)", "Masori body (f)", "Masori chaps (f)"]],
+    ["Ancestral robes set", ["Ancestral hat", "Ancestral robe top", "Ancestral robe bottom"]],
+    ["Justiciar armour set", ["Justiciar faceguard", "Justiciar chestguard", "Justiciar legguards"]],
+    ["Sunfire fanatic armour set", ["Sunfire fanatic helm", "Sunfire fanatic cuirass", "Sunfire fanatic chausses"]],
+    ["Dharok's armour set", ["Dharok's helm", "Dharok's platebody", "Dharok's platelegs", "Dharok's greataxe"]],
+    ["Karil's armour set", ["Karil's coif", "Karil's leathertop", "Karil's leatherskirt", "Karil's crossbow"]],
+    ["Ahrim's armour set", ["Ahrim's hood", "Ahrim's robetop", "Ahrim's robeskirt", "Ahrim's staff"]],
+    ["Guthan's armour set", ["Guthan's helm", "Guthan's platebody", "Guthan's chainskirt", "Guthan's warspear"]],
+    ["Torag's armour set", ["Torag's helm", "Torag's platebody", "Torag's platelegs", "Torag's hammers"]],
+    ["Verac's armour set", ["Verac's helm", "Verac's brassard", "Verac's plateskirt", "Verac's flail"]],
+    ["Obsidian armour set", ["Obsidian helmet", "Obsidian platebody", "Obsidian platelegs"]],
+    ["Zamorak godsword", ["Zamorak hilt", "Godsword blade"]],
+    ["Ancient godsword", ["Ancient hilt", "Godsword blade"]],
+    ["Saradomin godsword", ["Saradomin hilt", "Godsword blade"]],
+    ["Bandos godsword", ["Bandos hilt", "Godsword blade"]],
+    ["Armadyl godsword", ["Armadyl hilt", "Godsword blade"]]
+  ];
+  const sets = [];
+  for (const [sname, parts] of SETS) {
+    const sid = nameToId[sname];
+    const pids = parts.map(x => nameToId[x]);
+    if (!sid || pids.some(x => !x) || !rawLatest[sid]) continue;
+    const setHi = rawLatest[sid].high, setLo = rawLatest[sid].low;
+    const pLos = pids.map(x => (rawLatest[x] || {}).low);
+    const pHis = pids.map(x => (rawLatest[x] || {}).high);
+    if (setHi && setLo && pLos.every(Boolean) && pHis.every(Boolean)) {
+      const costPack = pLos.reduce((a, b) => a + b, 0);
+      const profPack = (setHi - geTax(setHi)) - costPack;
+      const revUnpack = pHis.reduce((a, b) => a + (b - geTax(b)), 0);
+      const profUnpack = revUnpack - setLo;
+      if (profPack >= profUnpack && profPack > 5000) {
+        sets.push({ name: sname, strat: 'BUY PIECES -> PACK', cost: costPack, rev: setHi, prof: profPack, roi: ((profPack / costPack) * 100).toFixed(2) });
+      } else if (profUnpack > 5000) {
+        sets.push({ name: sname, strat: 'BUY SET -> DISMANTLE', cost: setLo, rev: pHis.reduce((a,b)=>a+b,0), prof: profUnpack, roi: ((profUnpack / setLo) * 100).toFixed(2) });
+      }
+    }
+  }
+
+  whales.sort((a, b) => b.score - a.score);
+  sets.sort((a, b) => b.prof - a.prof);
+  decants.sort((a, b) => b.prof4 - a.prof4);
+  snipes.sort((a, b) => parseFloat(b.roi) - parseFloat(a.roi));
+  flips.sort((a, b) => b.pot - a.pot);
+  alchs.sort((a, b) => b.prof4h - a.prof4h);
+
+  computed = { whales, sets, decants, snipes, flips, alchs };
+
+  document.getElementById('whale_rows').innerHTML = whales.slice(0, 10).map((w, i) => `
+    <tr>
+      <td>${lockName(w.name, i)}</td>
+      <td class="num" style="color:#ef4444;font-weight:700">${w.surge}x Surge</td>
+      <td class="num" style="color:#22c55e;font-weight:700">${w.buyPct}% BUY</td>
+      <td class="num">${fmt(w.price)} gp</td>
+      <td class="num" style="color:#f59e0b;font-weight:700">${w.turnM}M gp</td>
+      <td class="num" style="color:#38bdf8">${fmt(w.qty)}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('set_rows').innerHTML = sets.slice(0, 12).map((s, i) => `
+    <tr>
+      <td>${lockName(s.name, i)}</td>
+      <td style="color:#38bdf8;font-weight:700">${s.strat}</td>
+      <td class="num">${fmt(s.cost)} gp</td>
+      <td class="num">${fmt(s.rev)} gp</td>
+      <td class="num" style="color:#22c55e;font-weight:700">+${fmt(s.prof)} gp</td>
+      <td class="num" style="color:#f59e0b">+${s.roi}%</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('decant_rows').innerHTML = decants.slice(0, 12).map((d, i) => `
+    <tr>
+      <td>${lockName(d.recipe, i)}</td>
+      <td class="num">${fmt(d.buyd)} gp</td>
+      <td class="num">${fmt(d.cost4)} gp</td>
+      <td class="num">${fmt(d.sell4)} gp</td>
+      <td class="num" style="color:#22c55e;font-weight:700">+${fmt(d.prof4)} gp</td>
+      <td class="num" style="color:#f59e0b">+${d.roi}%</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('snipe_rows').innerHTML = snipes.slice(0, 15).map((s, i) => `
+    <tr>
+      <td>${lockName(s.name, i)}</td>
+      <td class="num">${fmt(s.buy)} gp</td>
+      <td class="num">${fmt(s.sell)} gp</td>
+      <td class="num" style="color:#22c55e;font-weight:700">+${fmt(s.margin)} gp</td>
+      <td class="num" style="color:#f59e0b;font-weight:700">+${s.roi}%</td>
+      <td class="num" style="color:#38bdf8">${fmt(s.vol)}/hr</td>
+      <td class="num">${fmt(s.limit)}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('flip_rows').innerHTML = flips.slice(0, 20).map((f, i) => `
+    <tr>
+      <td>${lockName(f.name, i)}</td>
+      <td class="num">${fmt(f.buy)}</td>
+      <td class="num">${fmt(f.sell)}</td>
+      <td class="num" style="color:#22c55e;font-weight:700">+${fmt(f.margin)}</td>
+      <td class="num" style="color:#38bdf8">${f.roi}%</td>
+      <td class="num" style="color:#a1a1aa">${fmt(f.vol)}</td>
+      <td class="num" style="color:#f59e0b;font-weight:700">+${fmt(f.pot)} gp</td>
+    </tr>
+  `).join('');
+
+  document.getElementById('alch_rows').innerHTML = alchs.slice(0, 20).map(a => `
+    <tr>
+      <td><strong>${a.name}</strong></td>
+      <td class="num">${fmt(a.buy)}</td>
+      <td class="num">${fmt(a.alch)}</td>
+      <td class="num" style="color:#22c55e;font-weight:700">+${fmt(a.prof)}</td>
+      <td class="num">${fmt(a.limit)}</td>
+      <td class="num" style="color:#f59e0b;font-weight:700">+${fmt(a.prof4h)} gp</td>
+    </tr>
+  `).join('');
+}
+
+function speakBriefing() {
+  if (!isPro) { openModal(); return; }
+  if (!('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const w = computed.whales[0];
+  const s = computed.sets[0];
+  const d = computed.decants[0];
+  let msg = "OSRS Quant Pro Briefing. ";
+  if (w) msg += `Top whale buyout: ${w.name.replace(/\[.*?\]/g,'')}, ${w.surge} times volume surge with ${w.buyPct} percent buy pressure. `;
+  if (s) msg += `Top set arbitrage: ${s.name}, ${s.strat.toLowerCase()} for plus ${Math.round(s.prof/1000)} thousand GP. `;
+  if (d) msg += `Top Bob Barter decant: ${d.recipe}, plus ${d.prof4} GP per 4 dose.`;
+  const u = new SpeechSynthesisUtterance(msg);
+  u.rate = 1.08;
+  window.speechSynthesis.speak(u);
+}
+
+let tickTimer = null, tickIdx = 0, audioCtx = null;
+function toggleTick() {
+  const btn = document.getElementById('btn_tick');
+  if (tickTimer) {
+    clearInterval(tickTimer);
+    tickTimer = null;
+    btn.textContent = '600ms METRONOME';
+    for (let i = 0; i < 4; i++) document.getElementById('td' + i).classList.remove('on');
+    return;
+  }
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  btn.textContent = 'STOP 600ms';
+  tickTimer = setInterval(() => {
+    for (let i = 0; i < 4; i++) document.getElementById('td' + i).classList.toggle('on', i === (tickIdx % 4));
+    const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+    osc.frequency.value = (tickIdx % 4 === 0) ? 880 : 587.33;
+    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.045);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
+    tickIdx++;
+  }, 600);
+}
+
+checkProInit();
+calc10k();
+fetchLiveOSRS();
+</script>
+</body>
+</html>
